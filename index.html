@@ -811,21 +811,24 @@ function buildDone() {
 
   const wh = localStorage.getItem('sr_webhook');
   if (wh) {
-    fetch(wh, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        camera: CAMS[st.cam].n + ' — ' + unitStr,
-        inspector: st.inspector,
-        client: st.client,
-        status: status,
-        issues: issues.join(', '),
-        note: note,
-        photos: photos.length
-      })
-    }).then(r => {
-      if (r.ok) toast('✅ 노션에 저장됐어요!', 'ok');
-      else toast('⚠️ 노션 저장 실패 (응답 오류)');
+    const payload = JSON.stringify({
+      camera: CAMS[st.cam].n + ' — ' + unitStr,
+      inspector: st.inspector,
+      client: st.client,
+      status: status,
+      issues: issues.join(', '),
+      note: note,
+      photos: photos.length
+    });
+    fetch(wh, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: payload
+    }).then(() => {
+      toast('✅ 노션에 저장됐어요!', 'ok');
     }).catch(e => {
-      toast('⚠️ 노션 저장 실패: ' + e.message);
+      toast('⚠️ 전송 실패: ' + e.message);
     });
   } else {
     // webhook not set - silent

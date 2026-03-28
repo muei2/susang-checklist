@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="수상한렌탈">
+<meta name="theme-color" content="#0a0a0a">
+<title>수상한렌탈 점검</title>
+<style>
+:root{--bg:#0a0a0a;--sf:#161616;--sf2:#1f1f1f;--bd:#2c2c2c;--tx:#f0f0f0;--mu:#5a5a5a;--red:#ff4444;--or:#ff8800;--gr:#00cc66;--ar:#c8a96e;--so:#5b9bd5;--ca:#c04040;--dj:#666;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Helvetica Neue',-apple-system,sans-serif;overflow:hidden;}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .32s;}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none;}
+.screen.out{transform:translateX(-30%);opacity:0;pointer-events:none;}
+/* HEADER */
+.hdr{padding:env(safe-area-inset-top,44px) 20px 14px;padding-top:calc(env(safe-area-inset-top,44px) + 12px);background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.back{width:36px;height:36px;border-radius:50%;background:var(--sf2);border:none;color:var(--tx);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hdr-title{font-size:17px;font-weight:600;flex:1;}
+.hdr-sub{font-size:12px;color:var(--mu);margin-top:2px;}
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px;}
+.scroll.np{padding:0;}
+/* HOME */
+.home-top{padding:calc(env(safe-area-inset-top,44px)+20px) 24px 16px;flex-shrink:0;}
+.logo-row{display:flex;align-items:center;margin-bottom:22px;}
+.logo-txt{font-size:18px;font-weight:800;letter-spacing:.01em;color:var(--tx);}
+.gear-btn{margin-left:auto;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:7px 11px;color:var(--mu);font-size:13px;cursor:pointer;}
+.home-title{font-size:25px;font-weight:800;line-height:1.25;}
+/* CAM GRID */
+.cam-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px 0 18px;}
+.cam-card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:15px 13px 13px;cursor:pointer;transition:background .1s,transform .1s;position:relative;-webkit-user-select:none;}
+.cam-card:active{transform:scale(.97);background:var(--sf2);}
+.cam-card.full{grid-column:span 2;}
+.cam-brand{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+.cam-name{font-size:15px;font-weight:700;line-height:1.3;color:var(--tx);}
+.cam-dot{width:5px;height:5px;border-radius:50%;position:absolute;top:13px;right:13px;}
+.arri .cam-brand{color:var(--ar);}.arri .cam-dot{background:var(--ar);}
+.sony .cam-brand{color:var(--so);}.sony .cam-dot{background:var(--so);}
+.canon .cam-brand{color:var(--ca);}.canon .cam-dot{background:var(--ca);}
+.dji .cam-brand{color:var(--dj);}.dji .cam-dot{background:var(--dj);}
+.sec-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:7px;margin-top:2px;}
+.divider{height:1px;background:var(--bd);margin:14px 0;}
+/* INPUT */
+.field-label{display:block;font-size:11px;color:var(--mu);margin-bottom:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.input{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px 15px;color:var(--tx);font-size:16px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border-color .15s;}
+.input:focus{border-color:rgba(255,255,255,.3);}
+/* NUM PICKER */
+.num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
+.num-btn{background:var(--sf);border:1.5px solid var(--bd);border-radius:11px;padding:13px 0;font-size:16px;font-weight:700;color:var(--mu);cursor:pointer;text-align:center;transition:all .12s;-webkit-user-select:none;}
+.num-btn:active{transform:scale(.95);}
+.num-btn.sel{border-color:rgba(255,255,255,.55);color:var(--tx);background:rgba(255,255,255,.06);}
+/* BOTTOM BAR */
+.bbar{padding:15px 20px;padding-bottom:calc(15px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--bd);flex-shrink:0;}
+.btn-p{width:100%;background:#fff;color:#000;font-size:16px;font-weight:800;padding:15px;border-radius:13px;border:none;cursor:pointer;transition:opacity .15s,transform .15s;}
+.btn-p:active{transform:scale(.98);opacity:.85;}
+.btn-s{width:100%;background:var(--sf);color:var(--tx);font-size:15px;font-weight:600;padding:13px;border-radius:13px;border:1px solid var(--bd);cursor:pointer;margin-top:9px;}
+.btn-s:active{background:var(--sf2);}
+/* TABS */
+.tab-bar{display:flex;background:var(--sf2);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.tab{flex:1;padding:11px 0;text-align:center;font-size:13px;font-weight:600;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.active{color:var(--tx);border-bottom-color:#fff;}
+/* PROGRESS */
+.prog-wrap{padding:11px 20px;background:var(--bg);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.prog-row{display:flex;justify-content:space-between;margin-bottom:5px;}
+.prog-label{font-size:12px;color:var(--mu);}
+.prog-pct{font-size:12px;font-weight:700;color:rgba(255,255,255,.45);}
+.prog-bar{height:2px;background:var(--bd);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:#fff;border-radius:99px;transition:width .3s;}
+/* CHECKLIST */
+.sec-hdr{background:rgba(10,10,10,.95);backdrop-filter:blur(8px);padding:8px 20px;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;}
+.sec-hdr-name{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);}
+.sec-hdr-cnt{font-size:11px;color:rgba(255,255,255,.3);font-weight:600;}
+.chk-item{display:flex;align-items:flex-start;gap:13px;padding:13px 20px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s;}
+.chk-item:active{background:var(--sf);}
+.chk-item.done{opacity:.35;}
+.chkbox{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:1px;}
+.chk-item.done .chkbox{background:#fff;border-color:#fff;}
+.chkmark{opacity:0;font-size:12px;color:#000;font-weight:900;}
+.chk-item.done .chkmark{opacity:1;}
+.chk-lbl{font-size:14px;line-height:1.4;font-weight:500;}
+.chk-sub{font-size:12px;color:var(--mu);margin-top:2px;line-height:1.4;}
+.bdg{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:5px;vertical-align:middle;}
+.bdg-r{background:rgba(255,68,68,.15);color:#ff6666;}
+.bdg-w{background:rgba(255,136,0,.12);color:#ffaa44;}
+/* NOTICE */
+.notice{border-radius:11px;padding:11px 13px;margin-bottom:11px;font-size:12px;line-height:1.6;}
+.notice-r{background:rgba(255,60,60,.08);border:1px solid rgba(255,60,60,.18);color:#ffaaaa;}
+.notice strong{display:block;font-weight:700;margin-bottom:2px;}
+/* PHOTO SECTION */
+.photo-section{padding:16px;}
+.photo-upload{width:100%;border:1.5px dashed var(--bd);border-radius:13px;padding:26px 16px;text-align:center;cursor:pointer;background:transparent;color:var(--mu);font-size:14px;font-family:inherit;display:block;transition:background .15s;}
+.photo-upload:active{background:var(--sf);}
+.photo-icon{font-size:28px;margin-bottom:7px;display:block;}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+.photo-thumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--sf2);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-del{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.75);border:none;color:#fff;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.note-area{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:13px 15px;color:var(--tx);font-size:15px;font-family:inherit;resize:none;outline:none;margin-top:13px;min-height:140px;-webkit-appearance:none;}
+.note-area:focus{border-color:rgba(255,255,255,.3);}
+.photo-badge{display:inline-block;background:rgba(255,255,255,.1);color:var(--tx);font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:5px;}
+/* TOAST */
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(16px);background:rgba(255,60,60,.95);color:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:24px;pointer-events:none;opacity:0;transition:all .22s;z-index:999;white-space:nowrap;}
+.toast.success{background:rgba(0,180,90,.95);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* COMPLETE */
+.c-hero{text-align:center;padding:34px 20px 18px;}
+.c-icon{font-size:50px;margin-bottom:12px;}
+.c-title{font-size:23px;font-weight:800;margin-bottom:5px;}
+.c-sub{font-size:14px;color:var(--mu);}
+.sum-card{background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:15px;margin-bottom:11px;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd);}
+.sum-row:last-child{border-bottom:none;}
+.sum-k{font-size:13px;color:var(--mu);}
+.sum-v{font-size:13px;font-weight:600;}
+.issue-item{padding:6px 0;border-bottom:1px solid var(--bd);font-size:13px;color:#ff6666;}
+.issue-item:last-child{border-bottom:none;}
+.st-ok{background:rgba(0,200,100,.12);color:var(--gr);font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.st-bad{background:rgba(255,60,60,.12);color:var(--red);font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;}
+/* SETTINGS */
+.set-item{background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:15px;margin-bottom:9px;}
+.wh-ok{font-size:12px;margin-top:7px;padding:7px 11px;border-radius:8px;background:rgba(0,200,100,.08);color:var(--gr);}
+.wh-no{font-size:12px;margin-top:7px;padding:7px 11px;border-radius:8px;background:rgba(255,130,0,.08);color:var(--or);}
+.set-btn{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;color:var(--tx);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- ① HOME -->
+<div class="screen" id="s-home">
+  <div class="home-top">
+    <div class="logo-row">
+      <span class="logo-txt">susangrental</span>
+      <button class="gear-btn" onclick="goSettings()">⚙️</button>
+    </div>
+    <div class="home-title">어떤 카메라를<br>점검할까요?</div>
+  </div>
+  <div class="scroll">
+    <div class="sec-label">ARRI</div>
+    <div class="cam-grid">
+      <div class="cam-card arri" onclick="pickCam('alexa35')"><div class="cam-dot"></div><div class="cam-brand">ARRI</div><div class="cam-name">Alexa 35</div></div>
+      <div class="cam-card arri" onclick="pickCam('aminilf')"><div class="cam-dot"></div><div class="cam-brand">ARRI</div><div class="cam-name">Alexa Mini LF</div></div>
+      <div class="cam-card arri" onclick="pickCam('amini')"><div class="cam-dot"></div><div class="cam-brand">ARRI</div><div class="cam-name">Alexa Mini</div></div>
+      <div class="cam-card arri" onclick="pickCam('amira')"><div class="cam-dot"></div><div class="cam-brand">ARRI</div><div class="cam-name">AMIRA</div></div>
+    </div>
+    <div class="sec-label">Sony</div>
+    <div class="cam-grid">
+      <div class="cam-card sony" onclick="pickCam('burano')"><div class="cam-dot"></div><div class="cam-brand">Sony</div><div class="cam-name">Burano</div></div>
+      <div class="cam-card sony" onclick="pickCam('fx9')"><div class="cam-dot"></div><div class="cam-brand">Sony</div><div class="cam-name">FX9</div></div>
+      <div class="cam-card sony" onclick="pickCam('fx6')"><div class="cam-dot"></div><div class="cam-brand">Sony</div><div class="cam-name">FX6</div></div>
+      <div class="cam-card sony" onclick="pickCam('a7s3')"><div class="cam-dot"></div><div class="cam-brand">Sony</div><div class="cam-name">A7S III</div></div>
+    </div>
+    <div class="sec-label">Canon</div>
+    <div class="cam-grid">
+      <div class="cam-card canon" onclick="pickCam('c80')"><div class="cam-dot"></div><div class="cam-brand">Canon</div><div class="cam-name">EOS C80</div></div>
+      <div class="cam-card canon" onclick="pickCam('c50')"><div class="cam-dot"></div><div class="cam-brand">Canon</div><div class="cam-name">EOS C50</div></div>
+      <div class="cam-card canon full" onclick="pickCam('r6m3')"><div class="cam-dot"></div><div class="cam-brand">Canon</div><div class="cam-name">R6 Mark III</div></div>
+    </div>
+    <div class="sec-label">DJI</div>
+    <div class="cam-grid">
+      <div class="cam-card dji full" onclick="pickCam('action6')"><div class="cam-dot"></div><div class="cam-brand">DJI</div><div class="cam-name">Action 6</div></div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- ② SETUP -->
+<div class="screen hidden" id="s-setup">
+  <div class="hdr">
+    <button class="back" onclick="navBack('s-home','s-setup')">‹</button>
+    <div><div class="hdr-title" id="setup-title">카메라</div><div class="hdr-sub">점검 설정</div></div>
+  </div>
+  <div class="scroll">
+    <label class="field-label">담당자 이름</label>
+    <input class="input" id="f-inspector" type="text" placeholder="이름 입력" maxlength="20">
+    <div style="height:13px"></div>
+    <label class="field-label">고객명</label>
+    <input class="input" id="f-client" type="text" placeholder="고객명 또는 프로젝트명" maxlength="30">
+    <div style="height:15px"></div>
+    <label class="field-label">카메라 번호</label>
+    <div class="num-grid">
+      <div class="num-btn" onclick="pickNum(1)">01</div>
+      <div class="num-btn" onclick="pickNum(2)">02</div>
+      <div class="num-btn" onclick="pickNum(3)">03</div>
+      <div class="num-btn" onclick="pickNum(4)">04</div>
+      <div class="num-btn" onclick="pickNum(5)">05</div>
+      <div class="num-btn" onclick="pickNum(6)">06</div>
+      <div class="num-btn" onclick="pickNum(7)">07</div>
+      <div class="num-btn" onclick="pickNum(8)">08</div>
+      <div class="num-btn" onclick="pickNum(9)">09</div>
+      <div class="num-btn" onclick="pickNum(10)">10</div>
+    </div>
+  </div>
+  <div class="bbar"><button class="btn-p" onclick="startCheck()">점검 시작 →</button></div>
+</div>
+
+<!-- ③ CHECKLIST -->
+<div class="screen hidden" id="s-check">
+  <div class="hdr">
+    <button class="back" onclick="navBack('s-setup','s-check')">‹</button>
+    <div><div class="hdr-title" id="check-title"></div><div class="hdr-sub">장비 점검</div></div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-row"><span class="prog-label" id="prog-txt">0 / 0</span><span class="prog-pct" id="prog-pct">0%</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" id="tab-chk" onclick="switchTab('chk')">체크리스트</div>
+    <div class="tab" id="tab-photo" onclick="switchTab('photo')">특이사항 사진 <span class="photo-badge" id="photo-cnt">0</span></div>
+  </div>
+  <div class="scroll np" id="panel-chk" style="overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+  <div class="scroll" id="panel-photo" style="display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <label class="photo-upload" for="photo-file">
+      <span class="photo-icon">📸</span>
+      사진 촬영 또는 갤러리에서 선택
+    </label>
+    <input type="file" id="photo-file" accept="image/*" multiple style="display:none" onchange="addPhotos(this)">
+    <div class="photo-grid" id="photo-grid"></div>
+    <textarea class="note-area" id="note-area" placeholder="이상 항목, 파손 부위, 수리 필요 여부 등 특이사항을 입력하세요..."></textarea>
+  </div>
+  <div class="bbar"><button class="btn-p" onclick="tryDone()">점검 완료 →</button></div>
+</div>
+
+<!-- ④ COMPLETE -->
+<div class="screen hidden" id="s-done">
+  <div class="hdr">
+    <button class="back" onclick="navBack('s-check','s-done')">‹</button>
+    <div><div class="hdr-title">점검 완료</div></div>
+  </div>
+  <div class="scroll" id="done-content"></div>
+  <div class="bbar">
+    <button class="btn-p" onclick="goHome()">새 점검 시작</button>
+    <button class="btn-s" id="copy-btn" onclick="copyResult()">📋 결과 복사</button>
+  </div>
+</div>
+
+<!-- ⑤ SETTINGS -->
+<div class="screen hidden" id="s-settings">
+  <div class="hdr">
+    <button class="back" onclick="navBack('s-home','s-settings')">‹</button>
+    <div><div class="hdr-title">설정</div></div>
+  </div>
+  <div class="scroll">
+    <div class="sec-label">노션 자동 기록 연동</div>
+    <div class="set-item">
+      <label class="field-label">Make Webhook URL</label>
+      <input class="input" id="wh-url" type="url" placeholder="https://hook.make.com/..." style="font-size:13px">
+      <div id="wh-status" class="wh-no">⚠️ 미설정</div>
+      <button class="btn-p" onclick="saveWh()" style="margin-top:11px;font-size:14px;padding:12px">저장</button>
+    </div>
+    <div class="divider"></div>
+    <button class="set-btn" onclick="openNotion()">📋 점검 기록 DB 열기 →</button>
+    <div style="height:14px"></div>
+    <div class="set-item" style="font-size:12px;color:var(--mu);line-height:1.7">수상한렌탈 장비 점검 앱 v2.0<br>아이패드 사파리 → 공유 → 홈 화면에 추가</div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+const CAMS = {
+  alexa35:{n:'Alexa 35'},aminilf:{n:'Alexa Mini LF'},amini:{n:'Alexa Mini'},amira:{n:'ARRI AMIRA'},
+  burano:{n:'Sony Burano'},fx9:{n:'Sony FX9'},fx6:{n:'Sony FX6'},a7s3:{n:'Sony A7S III'},
+  c80:{n:'Canon EOS C80'},c50:{n:'Canon EOS C50'},r6m3:{n:'Canon R6 Mark III'},action6:{n:'DJI Action 6'}
+};
+
+const SPECIFIC = {
+  alexa35:[
+    {s:'Alexa 35 전용',note:'ARRI 나사 3mm 전용 — 절대 힘줘서 조이지 않을 것. 스르륵 잠기는 느낌이 정상.',noCommon:true,items:[
+      {l:'마운트 잠금 레버 방향 확인 (화살표 방향 일치)',h:'불일치 시 렌즈 이탈 위험',b:'r'},
+      {l:'USB-C 동글 포함 여부 확인',b:'r'},
+      {l:'WiFi 안테나 2개 분실 여부 확인',h:'분실 시 청구',b:'r'},
+      {l:'안테나 끝까지 돌려서 체결 확인'},
+      {l:'VMB-5 캡 유무 확인',h:'분실 시 청구',b:'r'},
+      {l:'ECS 안테나 상태 체크'},
+      {l:'RS / 12V / AUDIO / ETH / PWR 고정 스크류 락 확인'},
+      {l:'MVF-2 고정 지지대 3개 나사 확인',h:'살짝 흔들어서 — 3mm, 힘 조임 금지'},
+      {l:'케이지 나사 4개 전수 확인'},
+      {l:'LMS-4 15mm 스크류 두개 락 확인'},
+      {l:'CBP-5 19mm 스크류 두개 락 확인'},
+      {l:'CBP-5 패드 손상유무 확인'},
+      {l:'CBP-5 슬라이딩 베이스 락 확인'},
+      {l:'BUD-1 슬라이딩 베이스 락 확인'},
+      {l:'슬라이딩 베이스 삼각대 플레이트판 탈착 확인'},
+      {l:'LMS-4 팬 그릴 철망 손상 확인',h:'상단·하단 모두'},
+      {l:'케이지 팬 소음 이상 없음 확인'},
+      {l:'배터리 팩 핀 (SMB-DAT/CLK/D/24V) 이상 확인'},
+      {l:'하단 출력 포트 8핀 이상 확인'},
+      {l:'Movi 사용 시 배터리 팩 소형 분리 셋팅 확인',h:'팀장급 전용',b:'w'},
+    ]},
+    {s:'외관',items:[
+      {l:'바디 전체 스크래치·충격 흔적 확인 (전·후·상·하·좌·우)'},
+      {l:'렌즈 마운트 링 변형·이물질 확인',h:'잠금 레버 유격 포함'},
+      {l:'센서 이물질·스크래치 확인',h:'밝은 조명 아래 확인'},
+      {l:'MVF-2 패널 스크래치·힌지 유격 확인'},
+      {l:'MVF-2 접안 고무 박리·렌즈 오염 확인'},
+      {l:'MVF-2 락 버튼 확인'},
+      {l:'Alexa 35 LCD 화면 스크래치 및 멍 유무 확인'},
+      {l:'버튼·다이얼·스위치 함몰·파손 확인'},
+      {l:'SDI / TC 단자 핀 이상 확인'},
+      {l:'단자 커버류 누락·파손 확인'},
+      {l:'미디어 슬롯 핀·커버 확인'},
+    ]},
+    {s:'기능',items:[
+      {l:'전원 정상 ON/OFF 확인'},
+      {l:'녹화 시작·정지 정상 동작 확인'},
+      {l:'fn키 작동 확인'},
+      {l:'MVF-2 출력 정상 확인'},
+      {l:'SDI 1·2 외부 출력 확인'},
+      {l:'오디오 입력·레벨 미터 정상 확인'},
+      {l:'미디어 카드 정상 인식 확인'},
+      {l:'카드 내 고객 데이터 삭제 완료 (포맷)',b:'r'},
+      {l:'설정 공장 초기화 완료 (LUT·WiFi·프리셋 삭제)',b:'r'},
+    ]},
+    {s:'구성품',items:[
+      {l:'바디 캡 포함 확인'},
+      {l:'SXR Capture Drive — Alexa 35 전용 확인',h:'2TB × 2ea / 1TB × 2ea'},
+    ]},
+  ],
+  aminilf:[
+    {s:'Alexa Mini LF 전용',note:'ARRI 나사 3mm 전용 — 절대 힘줘서 조이지 않을 것. 스르륵 잠기는 느낌이 정상.',noCommon:true,items:[
+      {l:'VF 단자 접촉 확인 — 손으로 당겨서 빠지는지 체크',h:'고장 빈도 높음',b:'r'},
+      {l:'WiFi 안테나 분실 여부·끝까지 체결 확인',h:'분실 시 청구',b:'r'},
+      {l:'RAB-1 레버 잠금 방향 정상 확인 및 체결'},
+      {l:'MSB-3 사이드 그립 장착 위치 확인',h:'왼쪽(REC 버튼 쪽)에만 장착 가능',b:'w'},
+      {l:'BAT 단자 잠금 링 느슨함 여부 확인',h:'느슨하면 팀장 보고',b:'w'},
+      {l:'CBP-1 패드 손상 확인'},
+      {l:'CBP-1 슬라이딩 베이스 락 확인'},
+      {l:'BUD-2 슬라이딩 베이스 락 확인'},
+      {l:'MAP-2A 나사 확인'},
+      {l:'MAP-2A 15mm 로드 노브 락 확인'},
+      {l:'CBP-1 19mm 로드 노브 락 확인'},
+      {l:'3pin / 2pin 단자 탄자국 확인'},
+      {l:'슬라이딩 베이스 아래 플레이트 클린 확인'},
+      {l:'MVF-2 고정 지지대 3개 나사 확인',h:'스타드라이버 사용'},
+      {l:'MVF-2 락 잠금 확인'},
+    ]},
+    {s:'외관',items:[
+      {l:'바디 전체 스크래치·충격 흔적 확인 (전·후·상·하·좌·우)'},
+      {l:'렌즈 마운트 링 변형·이물질 확인',h:'잠금 레버 유격 포함'},
+      {l:'센서 이물질·스크래치 확인',h:'밝은 조명 아래 확인'},
+      {l:'MVF-2 패널 스크래치·힌지 유격 확인'},
+      {l:'MVF-2 접안 고무 박리·렌즈 오염 확인'},
+      {l:'MVF-2 락 버튼 확인'},
+      {l:'버튼·다이얼·스위치 함몰·파손 확인'},
+      {l:'SDI / TC 단자 핀 이상 확인'},
+      {l:'단자 커버류 누락·파손 확인'},
+      {l:'미디어 슬롯 핀·커버 확인'},
+    ]},
+    {s:'기능',items:[
+      {l:'전원 정상 ON/OFF 확인'},
+      {l:'녹화 시작·정지 정상 동작 확인'},
+      {l:'fn키 작동 확인'},
+      {l:'MVF-2 출력 정상 확인'},
+      {l:'SDI 1·2 외부 출력 확인'},
+      {l:'오디오 입력·레벨 미터 정상 확인'},
+      {l:'미디어 카드 정상 인식 확인'},
+      {l:'카드 내 고객 데이터 삭제 완료 (포맷)',b:'r'},
+      {l:'설정 공장 초기화 완료 (LUT·WiFi·프리셋 삭제)',b:'r'},
+    ]},
+    {s:'구성품',items:[
+      {l:'바디 캡 포함 확인'},
+      {l:'SXR Capture Drive — Alexa Mini LF 전용 확인',h:'1TB × 4ea'},
+    ]},
+  ],
+  amini:[
+    {s:'Alexa Mini 전용',note:'ARRI 나사 3mm 전용 — 절대 힘줘서 조이지 않을 것. 스르륵 잠기는 느낌이 정상.',noCommon:true,items:[
+      {l:'EVF 단자 라인 확인',b:'r'},
+      {l:'WiFi 안테나 분실 여부·끝까지 체결 확인',h:'분실 시 청구',b:'r'},
+      {l:'RAB-1 레버 잠금 방향 정상 확인 및 체결'},
+      {l:'BAT 단자 잠금 링 느슨함 여부 확인',h:'느슨하면 팀장 보고',b:'w'},
+      {l:'BP-8 19mm 슬라이딩 베이스 락 확인'},
+      {l:'Alexa Mini EVF 힌지 부분 나사 3개 확인'},
+    ]},
+    {s:'외관',items:[
+      {l:'바디 전체 스크래치·충격 흔적 확인 (전·후·상·하·좌·우)'},
+      {l:'렌즈 마운트 링 변형·이물질 확인',h:'잠금 레버 유격 포함'},
+      {l:'센서 이물질·스크래치 확인',h:'밝은 조명 아래 확인'},
+      {l:'미니 뷰파인더 패널 스크래치·힌지 유격 확인'},
+      {l:'미니 뷰파인더 접안 고무 박리·렌즈 오염 확인'},
+      {l:'버튼·다이얼·스위치 함몰·파손 확인'},
+      {l:'SDI / TC 단자 핀 이상 확인'},
+      {l:'단자 커버류 누락·파손 확인'},
+      {l:'미디어 슬롯 핀·커버 확인'},
+    ]},
+    {s:'기능',items:[
+      {l:'전원 정상 ON/OFF 확인'},
+      {l:'녹화 시작·정지 정상 동작 확인'},
+      {l:'fn키 작동 확인'},
+      {l:'미니 뷰파인더 출력 정상 확인'},
+      {l:'SDI 1·2 외부 출력 확인'},
+      {l:'오디오 입력·레벨 미터 정상 확인'},
+      {l:'미디어 카드 정상 인식 확인'},
+      {l:'카드 내 고객 데이터 삭제 완료 (포맷)',b:'r'},
+      {l:'설정 공장 초기화 완료 (LUT·WiFi·프리셋 삭제)',b:'r'},
+    ]},
+    {s:'구성품',items:[
+      {l:'바디 캡 포함 확인'},
+      {l:'CFast 2.0 크랙 확인'},
+    ]},
+  ],
+  amira:[{s:'ARRI AMIRA 전용',note:'ARRI 나사 3mm 전용. PL 마운트 기종.',items:[
+    {l:'PL 마운트 잠금 레버 유격·이물질 확인'},
+    {l:'마운트 내부 핀 접점 이상 확인'},
+    {l:'CFast 2.0 슬롯 A·B 핀 이상 확인'},
+    {l:'내장 ND 0.6 / 1.2 / 2.1 전환 정상 확인',h:'렌즈 교체 전 Clear 위치 확인'},
+    {l:'ND 레버 걸림·파손 없음 확인',b:'w'},
+    {l:'XLR 4채널 단자 핀 이상 확인',h:'채널별 개별 확인'},
+    {l:'내장 오디오 믹서 레벨 정상 확인'},
+    {l:'숄더 패드 장착 나사 조임 확인'},
+    {l:'숄더 패드 고무 패드 마모·박리 확인'},
+    {l:'탑 핸들 나사 조임·그립 고무 박리 확인'},
+    {l:'V-Lock / Gold Mount 플레이트 잠금 확인'},
+    {l:'케이지 팬 소음 이상 없음 확인'},
+  ]}],
+  burano:[{s:'Sony Burano 전용',note:'PL 어댑터 나사 2.5mm 전용. 상단 5개 정방향, 맨 아래 1개 역방향. 스프링 유무 필수 확인.',items:[
+    {l:'E-Mount 1시 방향 언락 버튼 동작 확인',h:'반출 시 고객에게 반드시 안내',b:'r'},
+    {l:'마운트 접점 핀 오염·이상 확인'},
+    {l:'PL 어댑터 장착 나사 6개 — 2.5mm 전용',h:'상단5 정방향 + 맨아래1 역방향',b:'r'},
+    {l:'PL 어댑터 나사 스프링 유무 전수 확인',h:'누락 시 접점 불량',b:'r'},
+    {l:'CFexpress B 슬롯 A·B 이물질 없음 확인',b:'r'},
+    {l:'SDI 단자 BNC 핀 4구 전수 확인'},
+    {l:'HDMI·XLR 단자 고무 커버 박리 여부 확인',b:'w'},
+    {l:'EVF 멀티핀 단자 핀 정렬 확인',h:'틀어지면 절대 억지 삽입 금지',b:'r'},
+    {l:'반출 전 고객에게 E-Mount 언락 버튼 위치 안내',h:'1시 방향 직접 시연',b:'r'},
+  ]},
+  {s:'외관',items:[
+    {l:'바디 전체 스크래치·충격 흔적 확인 (전·후·상·하·좌·우)'},
+    {l:'렌즈 마운트 링 변형·이물질 확인',h:'잠금 레버 유격 포함'},
+    {l:'센서 이물질·스크래치 확인',h:'밝은 조명 아래 확인'},
+    {l:'LCD 패널 스크래치·힌지 유격 확인'},
+    {l:'EVF 접안 고무 박리·렌즈 오염 확인'},
+    {l:'버튼·다이얼·스위치 함몰·파손 확인'},
+    {l:'SDI / TC 단자 핀 이상 확인'},
+    {l:'단자 커버류 누락·파손 확인'},
+    {l:'미디어 슬롯 핀·커버 확인'},
+  ]},
+  {s:'기능',items:[
+    {l:'전원 정상 ON/OFF 확인'},
+    {l:'녹화 시작·정지 정상 동작 확인'},
+    {l:'내장 ND 전환 정상 확인'},
+    {l:'ISO·셔터·조리개 다이얼 반응 확인'},
+    {l:'LCD/EVF 화상 출력 정상 확인'},
+    {l:'SDI 외부 출력 신호 확인'},
+    {l:'오디오 입력·레벨 미터 정상 확인'},
+    {l:'미디어 카드 정상 인식 확인'},
+    {l:'카드 내 고객 데이터 삭제 완료 (포맷)',b:'r'},
+    {l:'설정 공장 초기화 완료 (LUT·WiFi·프리셋 삭제)',b:'r'},
+  ]},
+  {s:'구성품',items:[
+    {l:'바디 캡 포함 확인'},
+  ]}],
+  fx9:[{s:'Sony FX9 전용',items:[
+    {l:'E-Mount 잠금 상태 및 접점 핀 확인'},
+    {l:'마운트 내부 센서 이물질·스크래치 확인'},
+    {l:'CFexpress Type A 슬롯 A·B 핀 이상 확인'},
+    {l:'내장 ND 전환 정상 확인 (1/4·1/16·1/64)',h:'Auto ND 포함'},
+    {l:'XLR 단자 2채널 핀 이상 확인'},
+    {l:'탑 핸들 장착 나사 조임 확인'},
+    {l:'그립 나사 조임·고무 박리 확인'},
+    {l:'V-Lock 배터리 플레이트 잠금 확인'},
+    {l:'배터리 단자 핀 부식·이물질 확인'},
+    {l:'LCD 뷰파인더 힌지 유격·파손 확인'},
+    {l:'HDMI / SDI 출력 정상 확인'},
+  ]}],
+  fx6:[{s:'Sony FX6 전용',note:'슬라이딩 베이스 락 레버 휨 이력 있음. Metabones PL 장착 시 슬라이딩 베이스 분리 → 하단 지지 로드 먼저 셋팅 → PL 체결 순서 필수.',items:[
+    {l:'E-Mount 접점 핀 이상·마모 확인',h:'사용 빈도 높음 — 집중 확인',b:'r'},
+    {l:'센서 이물질 확인 (렌즈 교체 빈도 높음)'},
+    {l:'물리 버튼 전체 눌림·탈락 확인',h:'REC/ND/S&Q/사용자버튼 등 전수'},
+    {l:'뷰파인더 마운트 클립 잠금 확인',h:'탈락 잦음',b:'w'},
+    {l:'뷰파인더 접힘 동작 확인'},
+    {l:'CFexpress A슬롯 A·B 이물질 없음 확인',b:'r'},
+    {l:'TILTA 케이지 나사 전수 확인',h:'상단·하단·사이드'},
+    {l:'마이크 홀더 잠금 철사 클립 포함 여부 확인',h:'분실 잦은 소모품',b:'r'},
+    {l:'V-Mount 핀 5개 형상 확인',h:'쏠림·눌림 시 팀장 보고',b:'r'},
+    {l:'SDI/TC 단자 고무 캡 박리 여부 확인',b:'w'},
+    {l:'슬라이딩 베이스 락 레버 휨 여부 확인',h:'휘었으면 팀장 보고',b:'r'},
+    {l:'Metabones PL 장착 시 슬라이딩 베이스 분리 → 지지 로드 먼저 셋팅',h:'지지대 없으면 마운트 파손',b:'r'},
+    {l:'Metabones PL 렌즈 캡 포함 여부 확인',h:'분실 잦음',b:'w'},
+  ]},
+  {s:'외관',items:[
+    {l:'바디 전체 스크래치·충격 흔적 확인 (전·후·상·하·좌·우)'},
+    {l:'렌즈 마운트 링 변형·이물질 확인',h:'잠금 레버 유격 포함'},
+    {l:'센서 이물질·스크래치 확인',h:'밝은 조명 아래 확인'},
+    {l:'LCD 패널 스크래치·힌지 유격 확인'},
+    {l:'EVF 접안 고무 박리·렌즈 오염 확인'},
+    {l:'버튼·다이얼·스위치 함몰·파손 확인'},
+    {l:'SDI / TC 단자 핀 이상 확인'},
+    {l:'단자 커버류 누락·파손 확인'},
+    {l:'미디어 슬롯 핀·커버 확인'},
+  ]},
+  {s:'기능',items:[
+    {l:'전원 정상 ON/OFF 확인'},
+    {l:'녹화 시작·정지 정상 동작 확인'},
+    {l:'내장 ND 전환 정상 확인'},
+    {l:'ISO·셔터·조리개 다이얼 반응 확인'},
+    {l:'LCD/EVF 화상 출력 정상 확인'},
+    {l:'SDI 외부 출력 신호 확인'},
+    {l:'오디오 입력·레벨 미터 정상 확인'},
+    {l:'미디어 카드 정상 인식 확인'},
+    {l:'카드 내 고객 데이터 삭제 완료 (포맷)',b:'r'},
+    {l:'설정 공장 초기화 완료 (LUT·WiFi·프리셋 삭제)',b:'r'},
+  ]},
+  {s:'구성품',items:[
+    {l:'바디 캡 포함 확인'},
+  ]}],
+  a7s3:[{s:'Sony A7S III 전용',items:[
+    {l:'E-Mount 잠금 상태 확인'},
+    {l:'CFexpress Type A 슬롯 A·B 핀 확인'},
+    {l:'LCD 틸트 힌지 유격·파손 확인 (반전 틸트 포함)'},
+    {l:'EVF 접안 고무 박리 확인'},
+    {l:'멀티 인터페이스 슈 핀 이상 확인'},
+    {l:'4K 120p 장시간 발열 이상 없음 확인',h:'팬 미탑재'},
+    {l:'배터리 NP-FZ100 수량 확인',h:'최소 2개 권장'},
+  ]}],
+  c80:[{s:'Canon EOS C80 전용',items:[
+    {l:'EF 마운트 잠금 확인'},
+    {l:'PL 마운트 어댑터 포함 여부 확인',h:'별도 구성 시 누락 주의'},
+    {l:'CFexpress Type B 슬롯 핀 확인'},
+    {l:'내장 ND 전환 정상 확인'},
+    {l:'XLR 단자 2채널 핀 이상 확인'},
+    {l:'탑 핸들 나사 조임·핸들 녹화 버튼 정상 확인'},
+  ]}],
+  c50:[{s:'Canon EOS C50 전용',items:[
+    {l:'EF-C 마운트 잠금 확인'},
+    {l:'SD 슬롯 핀·커버 이상 확인'},
+    {l:'내장 ND 전환 정상 확인'},
+    {l:'소형 바디 낙하 흔적 (하단·모서리) 집중 확인',h:'소형이라 충격에 취약'},
+    {l:'LCD 틸트 힌지 유격·파손 확인'},
+  ]}],
+  r6m3:[{s:'Canon R6 Mark III 전용',items:[
+    {l:'RF 마운트 잠금 상태 확인'},
+    {l:'SD 슬롯 A·B (UHS-II) 핀 이상 확인'},
+    {l:'LCD 힌지 (반전 틸트) 유격·파손 확인'},
+    {l:'멀티 기능 슈 핀 이상 확인'},
+    {l:'배터리 LP-E6P 수량 확인',h:'최소 2개 권장'},
+    {l:'손떨림 보정 (IBIS) 이상음 없음 확인'},
+  ]}],
+  action6:[{s:'DJI Action 6 전용',items:[
+    {l:'전면·후면 렌즈 스크래치·파손 확인',h:'교체 불가',b:'r'},
+    {l:'렌즈 표면 오염 클리닝 확인'},
+    {l:'자석 마운트 자력 강도 정상 확인',h:'약해지면 촬영 중 이탈 위험',b:'r'},
+    {l:'마운트 어댑터 세트 수량 확인'},
+    {l:'방수 케이스 실링 (고무 개스킷) 상태 확인'},
+    {l:'배터리 팽창 여부 확인',h:'팽창 시 즉시 교체',b:'r'},
+    {l:'배터리 수량 확인',h:'최소 2개 권장'},
+    {l:'터치스크린 (전후면) 반응 정상 확인'},
+  ]}],
+};
+
+const COMMON = [
+  {s:'외관',items:[
+    {l:'바디 전체 스크래치·충격 흔적 확인 (전·후·상·하·좌·우)'},
+    {l:'렌즈 마운트 링 변형·이물질 확인',h:'잠금 레버 유격 포함'},
+    {l:'센서 이물질·스크래치 확인',h:'밝은 조명 아래 확인'},
+    {l:'LCD 패널 스크래치·힌지 유격 확인'},
+    {l:'EVF 접안 고무 박리·렌즈 오염 확인'},
+    {l:'버튼·다이얼·스위치 함몰·파손 확인'},
+    {l:'HDMI / SDI / USB 단자 핀 이상 확인'},
+    {l:'단자 커버류 누락·파손 확인'},
+    {l:'미디어 슬롯 핀·커버 확인'},
+    {l:'배터리 슬롯 커버·잠금 레버·단자 핀 확인'},
+    {l:'1/4" 삼각대 나사홀 파손·마모 확인'},
+  ]},
+  {s:'기능',items:[
+    {l:'전원 정상 ON/OFF 확인'},
+    {l:'배터리 완충 상태 확인'},
+    {l:'녹화 시작·정지 정상 동작 확인'},
+    {l:'내장 ND 전환 정상 확인 (해당 기종)'},
+    {l:'ISO·셔터·조리개 다이얼 반응 확인'},
+    {l:'LCD/EVF 화상 출력 정상 확인'},
+    {l:'HDMI/SDI 외부 출력 신호 확인'},
+    {l:'오디오 입력·레벨 미터 정상 확인'},
+    {l:'미디어 카드 정상 인식 확인'},
+    {l:'카드 내 고객 데이터 삭제 완료 (포맷)',b:'r'},
+    {l:'설정 공장 초기화 완료 (LUT·WiFi·프리셋 삭제)',b:'r'},
+  ]},
+  {s:'구성품',items:[
+    {l:'바디 캡 포함 확인'},
+    {l:'배터리 수량 확인'},
+    {l:'충전기·AC 케이블 포함 확인'},
+    {l:'미디어 카드 수량·종류 확인'},
+    {l:'HDMI·SDI 케이블 포함 확인'},
+    {l:'하드케이스 외관·내부 폼·잠금장치 확인'},
+  ]},
+  {s:'서류',items:[
+    {l:'대여 전 상태 사진 촬영 완료 (외관 4면+마운트+센서)',b:'r'},
+    {l:'대여 계약서 서명 완료 확인'},
+  ]},
+];
+
+// ── STATE ─────────────────────────────────────────────
+let st = { cam: null, unit: null, inspector: '', client: '', checks: {}, total: 0 };
+let photos = [];
+
+// ── NAVIGATION ────────────────────────────────────────
+function navTo(id, fromId) {
+  if (fromId) {
+    const prev = document.getElementById(fromId);
+    prev.classList.add('out');
+    setTimeout(() => { prev.classList.add('hidden'); prev.classList.remove('out'); }, 320);
+  }
+  const next = document.getElementById(id);
+  next.classList.remove('hidden');
+  next.style.transform = 'translateX(100%)';
+  next.style.opacity = '0';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      next.style.transition = 'transform .32s cubic-bezier(.4,0,.2,1), opacity .32s';
+      next.style.transform = '';
+      next.style.opacity = '';
+      setTimeout(() => { next.style.transition = ''; }, 360);
+    });
+  });
+}
+function navBack(toId, fromId) {
+  document.getElementById(fromId).classList.add('hidden');
+  const t = document.getElementById(toId);
+  t.classList.remove('hidden', 'out');
+  t.style.transform = '';
+  t.style.opacity = '';
+}
+function goHome() {
+  ['s-setup','s-check','s-done','s-settings'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.add('hidden');
+    el.classList.remove('out');
+  });
+  document.getElementById('s-home').classList.remove('hidden');
+  st.checks = {};
+  photos = [];
+}
+function goSettings() { navTo('s-settings', 's-home'); }
+
+// ── TOAST ─────────────────────────────────────────────
+let toastT;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type === 'ok' ? ' success' : '');
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { el.classList.remove('show'); }, 2800);
+}
+
+// ── SETUP ─────────────────────────────────────────────
+function pickCam(id) {
+  st.cam = id;
+  st.unit = null;
+  document.querySelectorAll('.num-btn').forEach(el => el.classList.remove('sel'));
+  document.getElementById('setup-title').textContent = CAMS[id].n;
+  document.getElementById('f-inspector').value = '';
+  document.getElementById('f-client').value = '';
+  navTo('s-setup', 's-home');
+}
+function pickNum(n) {
+  st.unit = n;
+  document.querySelectorAll('.num-btn').forEach((el, i) => el.classList.toggle('sel', i + 1 === n));
+}
+function startCheck() {
+  if (!st.unit) { toast('카메라 번호를 선택해주세요'); return; }
+  st.inspector = document.getElementById('f-inspector').value.trim() || '미입력';
+  st.client = document.getElementById('f-client').value.trim();
+  st.checks = {};
+  photos = [];
+  buildList();
+  updateProg();
+  switchTab('chk');
+  document.getElementById('note-area').value = '';
+  document.getElementById('photo-grid').innerHTML = '';
+  document.getElementById('photo-cnt').textContent = '0';
+  const unitStr = String(st.unit).padStart(2, '0');
+  document.getElementById('check-title').textContent = CAMS[st.cam].n + ' — ' + unitStr;
+  navTo('s-check', 's-setup');
+}
+
+// ── CHECKLIST BUILD ───────────────────────────────────
+function buildList() {
+  const panel = document.getElementById('panel-chk');
+  panel.innerHTML = '';
+  let idx = 0;
+  const spec = SPECIFIC[st.cam] || [];
+  const hasNoCommon = spec.some(s => s.noCommon);
+  const secs = hasNoCommon ? spec : [...spec, ...COMMON];
+  secs.forEach(sec => {
+    if (sec.note) {
+      const n = document.createElement('div');
+      n.className = 'notice notice-r';
+      n.style.margin = '12px 16px 0';
+      n.innerHTML = '<strong>⚠️ 주의</strong>' + sec.note;
+      panel.appendChild(n);
+    }
+    const sh = document.createElement('div');
+    sh.className = 'sec-hdr';
+    sh.innerHTML = '<span class="sec-hdr-name">' + sec.s + '</span><span class="sec-hdr-cnt">' + sec.items.length + '개</span>';
+    panel.appendChild(sh);
+    sec.items.forEach(item => {
+      const key = 'k' + idx;
+      const div = document.createElement('div');
+      div.className = 'chk-item';
+      div.id = 'ci-' + key;
+      div.onclick = function() { toggle(key); };
+      const badge = item.b === 'r' ? '<span class="bdg bdg-r">필수</span>' : item.b === 'w' ? '<span class="bdg bdg-w">주의</span>' : '';
+      div.innerHTML = '<div class="chkbox"><span class="chkmark">✓</span></div><div><div class="chk-lbl">' + item.l + badge + '</div>' + (item.h ? '<div class="chk-sub">' + item.h + '</div>' : '') + '</div>';
+      panel.appendChild(div);
+      idx++;
+    });
+  });
+  st.total = idx;
+}
+function toggle(key) {
+  st.checks[key] = !st.checks[key];
+  document.getElementById('ci-' + key).classList.toggle('done', !!st.checks[key]);
+  updateProg();
+}
+function updateProg() {
+  const done = Object.values(st.checks).filter(Boolean).length;
+  const pct = st.total ? Math.round(done / st.total * 100) : 0;
+  document.getElementById('prog-txt').textContent = done + ' / ' + st.total + ' 완료';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+}
+
+// ── TABS ──────────────────────────────────────────────
+function switchTab(tab) {
+  const isChk = tab === 'chk';
+  document.getElementById('tab-chk').classList.toggle('active', isChk);
+  document.getElementById('tab-photo').classList.toggle('active', !isChk);
+  document.getElementById('panel-chk').style.display = isChk ? '' : 'none';
+  document.getElementById('panel-photo').style.display = isChk ? 'none' : '';
+}
+
+// ── PHOTOS ────────────────────────────────────────────
+function addPhotos(input) {
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      photos.push(e.target.result);
+      renderPhotos();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+function renderPhotos() {
+  const grid = document.getElementById('photo-grid');
+  const badge = document.getElementById('photo-cnt');
+  badge.textContent = photos.length;
+  grid.innerHTML = photos.map((src, i) =>
+    '<div class="photo-thumb"><img src="' + src + '"><button class="photo-del" onclick="delPhoto(' + i + ')">×</button></div>'
+  ).join('');
+}
+function delPhoto(i) {
+  photos.splice(i, 1);
+  renderPhotos();
+}
+
+// ── COMPLETE ──────────────────────────────────────────
+function tryDone() {
+  buildDone();
+  navTo('s-done', 's-check');
+}
+function buildDone() {
+  const done = Object.values(st.checks).filter(Boolean).length;
+  // 미체크 = 이상 있는 항목
+  const issues = [];
+  document.querySelectorAll('.chk-item').forEach((el, i) => {
+    if (!st.checks['k' + i]) {
+      issues.push(el.querySelector('.chk-lbl').textContent.replace(/필수|주의/g, '').trim());
+    }
+  });
+  const hasIssue = issues.length > 0;
+  const unitStr = String(st.unit).padStart(2, '0');
+  const now = new Date();
+  const ds = now.toLocaleString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  const note = document.getElementById('note-area').value.trim();
+  const status = hasIssue ? '이상 발견' : '이상 없음';
+
+  document.getElementById('done-content').innerHTML =
+    '<div class="c-hero">' +
+    '<div class="c-icon">' + (hasIssue ? '⚠️' : '✅') + '</div>' +
+    '<div class="c-title">' + (hasIssue ? '이상 항목 발견' : '이상 없음!') + '</div>' +
+    '<div class="c-sub">' + ds + '</div></div>' +
+    '<div style="padding:0 20px 20px">' +
+    '<div class="sum-card">' +
+    '<div class="sum-row"><span class="sum-k">기종</span><span class="sum-v">' + CAMS[st.cam].n + ' — ' + unitStr + '</span></div>' +
+    '<div class="sum-row"><span class="sum-k">담당자</span><span class="sum-v">' + st.inspector + '</span></div>' +
+    (st.client ? '<div class="sum-row"><span class="sum-k">고객명</span><span class="sum-v">' + st.client + '</span></div>' : '') +
+    '<div class="sum-row"><span class="sum-k">점검 항목</span><span class="sum-v">' + done + ' / ' + st.total + ' 완료</span></div>' +
+    (photos.length ? '<div class="sum-row"><span class="sum-k">특이사항 사진</span><span class="sum-v">' + photos.length + '장</span></div>' : '') +
+    '<div class="sum-row"><span class="sum-k">상태</span><span class="' + (hasIssue ? 'st-bad' : 'st-ok') + '">' + status + '</span></div>' +
+    '</div>' +
+    (hasIssue ? '<div class="sec-label" style="margin-bottom:7px">미체크 항목 (' + issues.length + '개)</div>' +
+      '<div class="sum-card">' + issues.map(u => '<div class="issue-item">• ' + u + '</div>').join('') + '</div>' : '') +
+    (note ? '<div class="sec-label" style="margin-bottom:7px;margin-top:4px">특이사항 메모</div>' +
+      '<div class="sum-card"><div style="font-size:13px;line-height:1.6;color:var(--tx)">' + note + '</div></div>' : '') +
+    '<button class="btn-s" onclick="openNotion()" style="margin-top:4px">📋 노션 기록 DB 열기</button>' +
+    '</div>';
+
+  window._resultTxt = '[수상한렌탈 점검 기록]\n' +
+    '기종: ' + CAMS[st.cam].n + ' — ' + unitStr + '\n' +
+    '담당자: ' + st.inspector + (st.client ? '\n고객: ' + st.client : '') + '\n' +
+    '일시: ' + ds + '\n' +
+    '점검: ' + done + '/' + st.total + '\n' +
+    '상태: ' + status +
+    (hasIssue ? '\n\n[미체크 항목]\n' + issues.map(u => '- ' + u).join('\n') : '') +
+    (note ? '\n\n[특이사항]\n' + note : '') +
+    (photos.length ? '\n\n[첨부 사진] ' + photos.length + '장' : '');
+
+  const wh = localStorage.getItem('sr_webhook');
+  if (wh) {
+    fetch(wh, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        camera: CAMS[st.cam].n + ' — ' + unitStr,
+        inspector: st.inspector,
+        client: st.client,
+        status: status,
+        issues: issues.join(', '),
+        note: note,
+        photos: photos.length
+      })
+    }).then(r => {
+      if (r.ok) toast('✅ 노션에 저장됐어요!', 'ok');
+      else toast('⚠️ 노션 저장 실패 (응답 오류)');
+    }).catch(e => {
+      toast('⚠️ 노션 저장 실패: ' + e.message);
+    });
+  } else {
+    // webhook not set - silent
+  }
+}
+function copyResult() {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(window._resultTxt).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✅ 복사됨!';
+      setTimeout(() => { btn.textContent = '📋 결과 복사'; }, 2000);
+    });
+  }
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+function saveWh() {
+  const val = document.getElementById('wh-url').value.trim();
+  localStorage.setItem('sr_webhook', val);
+  updateWhStatus();
+  const btn = document.querySelector('#s-settings .btn-p');
+  btn.textContent = '✅ 저장됨!';
+  setTimeout(() => { btn.textContent = '저장'; }, 1500);
+}
+function updateWhStatus() {
+  const val = localStorage.getItem('sr_webhook');
+  const el = document.getElementById('wh-status');
+  el.className = val ? 'wh-ok' : 'wh-no';
+  el.textContent = val ? '✅ 연동됨' : '⚠️ 미설정';
+}
+function openNotion() { window.open('https://www.notion.so/54963590e28745869d436105774d84b0', '_blank'); }
+
+// ── INIT ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('wh-url').value = localStorage.getItem('sr_webhook') || '';
+  updateWhStatus();
+});
+</script>
+</body>
+</html>

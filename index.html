@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="수상한렌탈">
 <meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" type="image/png" href="./icon-180.png">
 <title>수상한렌탈 점검</title>
 <style>
 :root{--bg:#0a0a0a;--sf:#161616;--sf2:#1f1f1f;--bd:#2c2c2c;--tx:#f0f0f0;--mu:#5a5a5a;--red:#ff4444;--or:#ff8800;--gr:#00cc66;--ar:#c8a96e;--so:#5b9bd5;--ca:#c04040;--dj:#666;}
@@ -124,6 +127,29 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Helvetic
 .wh-ok{font-size:12px;margin-top:7px;padding:7px 11px;border-radius:8px;background:rgba(0,200,100,.08);color:var(--gr);}
 .wh-no{font-size:12px;margin-top:7px;padding:7px 11px;border-radius:8px;background:rgba(255,130,0,.08);color:var(--or);}
 .set-btn{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;color:var(--tx);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;}
+/* HISTORY */
+.hist-card{display:flex;align-items:center;gap:12px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:9px;cursor:pointer;transition:background .1s;}
+.hist-card:active{background:var(--sf2);}
+.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.hist-dot.ok{background:var(--gr);}
+.hist-dot.bad{background:var(--red);}
+.hist-main{flex:1;min-width:0;}
+.hist-cam{font-size:15px;font-weight:700;color:var(--tx);}
+.hist-meta{font-size:12px;color:var(--mu);margin-top:3px;}
+.hist-right{text-align:right;flex-shrink:0;}
+.hist-status{font-size:12px;font-weight:700;}
+.hist-status.ok{color:var(--gr);}
+.hist-status.bad{color:var(--red);}
+.hist-count{font-size:11px;color:var(--mu);margin-top:3px;}
+.hist-empty{text-align:center;color:var(--mu);font-size:14px;padding:60px 20px;}
+.hist-tools{padding:12px 20px;background:var(--bg);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.hist-search{font-size:14px;padding:11px 14px;margin-bottom:10px;}
+.hist-chips{display:flex;gap:7px;}
+.chip{flex:1;background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:8px 0;color:var(--mu);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .12s;}
+.chip.active{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.45);color:var(--tx);}
+.chip:active{transform:scale(.97);}
+.detail-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:11px;}
+.detail-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:var(--sf2);}
 </style>
 </head>
 <body>
@@ -134,7 +160,8 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Helvetic
   <div class="home-top">
     <div class="logo-row">
       <span class="logo-txt">susangrental</span>
-      <button class="gear-btn" onclick="goSettings()">⚙️</button>
+      <button class="gear-btn" onclick="openHistory()" style="margin-left:auto">🕓 이력</button>
+      <button class="gear-btn" onclick="goSettings()" style="margin-left:8px">⚙️</button>
     </div>
     <div class="home-title">어떤 카메라를<br>점검할까요?</div>
   </div>
@@ -155,6 +182,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Helvetic
     </div>
     <div class="sec-label">Canon</div>
     <div class="cam-grid">
+      <div class="cam-card canon" onclick="pickCam('c400')"><div class="cam-dot"></div><div class="cam-brand">Canon</div><div class="cam-name">EOS C400</div></div>
       <div class="cam-card canon" onclick="pickCam('c80')"><div class="cam-dot"></div><div class="cam-brand">Canon</div><div class="cam-name">EOS C80</div></div>
       <div class="cam-card canon" onclick="pickCam('c50')"><div class="cam-dot"></div><div class="cam-brand">Canon</div><div class="cam-name">EOS C50</div></div>
       <div class="cam-card canon full" onclick="pickCam('r6m3')"><div class="cam-dot"></div><div class="cam-brand">Canon</div><div class="cam-name">R6 Mark III</div></div>
@@ -258,12 +286,43 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Helvetic
   </div>
 </div>
 
+<!-- ⑥ HISTORY (점검 이력) -->
+<div class="screen hidden" id="s-history">
+  <div class="hdr">
+    <button class="back" onclick="navBack('s-home','s-history')">‹</button>
+    <div style="flex:1"><div class="hdr-title">점검 이력</div><div class="hdr-sub" id="hist-sub">기기에 저장됨</div></div>
+    <button class="gear-btn" id="csv-btn" onclick="exportCSV()">⬇️ CSV</button>
+  </div>
+  <div class="hist-tools">
+    <input class="input hist-search" id="hist-search" type="text" placeholder="🔍 기종 · 담당자 · 고객명 검색" oninput="renderHistory()" autocomplete="off">
+    <div class="hist-chips">
+      <button class="chip active" data-f="all" onclick="setHistFilter('all')">전체</button>
+      <button class="chip" data-f="ok" onclick="setHistFilter('ok')">이상 없음</button>
+      <button class="chip" data-f="bad" onclick="setHistFilter('bad')">이상 발견</button>
+    </div>
+  </div>
+  <div class="scroll" id="hist-list"></div>
+</div>
+
+<!-- ⑦ HISTORY DETAIL (이력 상세) -->
+<div class="screen hidden" id="s-detail">
+  <div class="hdr">
+    <button class="back" onclick="navBack('s-history','s-detail')">‹</button>
+    <div><div class="hdr-title">점검 상세</div></div>
+  </div>
+  <div class="scroll" id="detail-content"></div>
+  <div class="bbar">
+    <button class="btn-p" id="detail-copy" onclick="copyDetail()">📋 결과 복사</button>
+    <button class="btn-s" onclick="deleteDetail()" style="color:#ff6666">🗑️ 이 기록 삭제</button>
+  </div>
+</div>
+
 <script>
 // ── DATA ──────────────────────────────────────────────
 const CAMS = {
   alexa35:{n:'Alexa 35'},aminilf:{n:'Alexa Mini LF'},amini:{n:'Alexa Mini'},amira:{n:'ARRI AMIRA'},
   burano:{n:'Sony Burano'},fx9:{n:'Sony FX9'},fx6:{n:'Sony FX6'},a7s3:{n:'Sony A7S III'},
-  c80:{n:'Canon EOS C80'},c50:{n:'Canon EOS C50'},r6m3:{n:'Canon R6 Mark III'},action6:{n:'DJI Action 6'}
+  c400:{n:'Canon EOS C400'},c80:{n:'Canon EOS C80'},c50:{n:'Canon EOS C50'},r6m3:{n:'Canon R6 Mark III'},action6:{n:'DJI Action 6'}
 };
 
 const SPECIFIC = {
@@ -515,6 +574,22 @@ const SPECIFIC = {
     {l:'4K 120p 장시간 발열 이상 없음 확인',h:'팬 미탑재'},
     {l:'배터리 NP-FZ100 수량 확인',h:'최소 2개 권장'},
   ]}],
+  c400:[{s:'Canon EOS C400 전용',items:[
+    {l:'RF 마운트 잠금 상태 및 접점 핀 확인'},
+    {l:'EF-EOS R / PL 마운트 어댑터 포함 여부 확인',h:'별도 구성 시 누락 주의',b:'w'},
+    {l:'풀프레임 센서 이물질·스크래치 확인',h:'밝은 조명 아래 확인',b:'r'},
+    {l:'CFexpress Type B 슬롯 핀·이물질 확인',b:'r'},
+    {l:'SD 카드 슬롯 핀·커버 이상 확인'},
+    {l:'내장 ND 전환 정상 확인 (2/4/6 스톱)',h:'확장 ND 8/10 스톱 포함'},
+    {l:'XLR 2채널 단자 핀 이상 확인',h:'채널별 개별 확인'},
+    {l:'탑 핸들 미니 XLR·녹화 버튼 정상 확인'},
+    {l:'탑 핸들 장착 나사 조임 확인'},
+    {l:'12G-SDI / HDMI 출력 단자 핀 이상 확인'},
+    {l:'멀티 기능 슈 핀 이상 확인'},
+    {l:'LCD 모니터(LM-V2) 탈착·힌지 유격 확인',h:'탈착 케이블 접점 포함'},
+    {l:'내장 냉각 팬 소음 이상 없음 확인'},
+    {l:'V-Lock 배터리 플레이트 잠금·단자 핀 확인'},
+  ]}],
   c80:[{s:'Canon EOS C80 전용',items:[
     {l:'EF 마운트 잠금 확인'},
     {l:'PL 마운트 어댑터 포함 여부 확인',h:'별도 구성 시 누락 주의'},
@@ -595,6 +670,65 @@ const COMMON = [
 let st = { cam: null, unit: null, inspector: '', client: '', checks: {}, total: 0 };
 let photos = [];
 
+// ── LOCAL STORAGE (IndexedDB) ─────────────────────────
+// 점검 이력을 기기에 영구 저장. 사진(dataURL)까지 함께 보관.
+const DB_NAME = 'susang_check';
+const DB_STORE = 'records';
+let _db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (_db) return resolve(_db);
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = function(e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = function(e) { _db = e.target.result; resolve(_db); };
+    req.onerror = function(e) { reject(e.target.error); };
+  });
+}
+
+async function saveRecord(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(record);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function getAllRecords() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).getAll();
+    req.onsuccess = () => resolve((req.result || []).sort((a, b) => b.ts - a.ts));
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function getRecord(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function deleteRecord(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
 // ── NAVIGATION ────────────────────────────────────────
 function navTo(id, fromId) {
   if (fromId) {
@@ -623,7 +757,7 @@ function navBack(toId, fromId) {
   t.style.opacity = '';
 }
 function goHome() {
-  ['s-setup','s-check','s-done','s-settings'].forEach(id => {
+  ['s-setup','s-check','s-done','s-settings','s-history','s-detail'].forEach(id => {
     const el = document.getElementById(id);
     el.classList.add('hidden');
     el.classList.remove('out');
@@ -633,6 +767,160 @@ function goHome() {
   photos = [];
 }
 function goSettings() { navTo('s-settings', 's-home'); }
+
+// ── HISTORY (점검 이력) ───────────────────────────────
+let _detailId = null;
+let histFilter = 'all';
+
+async function openHistory() {
+  histFilter = 'all';
+  const s = document.getElementById('hist-search'); if (s) s.value = '';
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.f === 'all'));
+  await renderHistory();
+  navTo('s-history', 's-home');
+}
+
+function setHistFilter(f) {
+  histFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.f === f));
+  renderHistory();
+}
+
+async function renderHistory() {
+  const list = document.getElementById('hist-list');
+  let records = [];
+  try { records = await getAllRecords(); } catch (e) {}
+  const total = records.length;
+
+  // 검색어 + 상태 필터 적용
+  const q = (document.getElementById('hist-search')?.value || '').trim().toLowerCase();
+  let view = records.filter(r => {
+    if (histFilter === 'ok' && r.hasIssue) return false;
+    if (histFilter === 'bad' && !r.hasIssue) return false;
+    if (q) {
+      const hay = (r.camName + ' ' + (r.inspector || '') + ' ' + (r.client || '')).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+
+  const sub = document.getElementById('hist-sub');
+  sub.textContent = (q || histFilter !== 'all')
+    ? view.length + ' / ' + total + '건'
+    : total + '건 · 기기에 저장됨';
+
+  if (!total) {
+    list.innerHTML = '<div class="hist-empty">저장된 점검 이력이 없습니다.<br>점검을 완료하면 여기에 기록됩니다.</div>';
+    return;
+  }
+  if (!view.length) {
+    list.innerHTML = '<div class="hist-empty">조건에 맞는 기록이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = view.map(r => {
+    const cls = r.hasIssue ? 'bad' : 'ok';
+    return '<div class="hist-card" onclick="openDetail(\'' + r.id + '\')">' +
+      '<div class="hist-dot ' + cls + '"></div>' +
+      '<div class="hist-main">' +
+        '<div class="hist-cam">' + escapeHtml(r.camName) + ' — ' + r.unitStr + '</div>' +
+        '<div class="hist-meta">' + r.date + ' · ' + escapeHtml(r.inspector || '미입력') +
+          (r.photos && r.photos.length ? ' · 📷' + r.photos.length : '') + '</div>' +
+      '</div>' +
+      '<div class="hist-right">' +
+        '<div class="hist-status ' + cls + '">' + r.status + '</div>' +
+        '<div class="hist-count">' + r.done + '/' + r.total + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function openDetail(id) {
+  const r = await getRecord(id);
+  if (!r) { toast('기록을 찾을 수 없습니다'); return; }
+  _detailId = id;
+  window._detailTxt = r.resultTxt;
+  const photoHtml = (r.photos && r.photos.length)
+    ? '<div class="sec-label" style="margin-bottom:7px">특이사항 사진 (' + r.photos.length + '장)</div>' +
+      '<div class="detail-photos">' + r.photos.map(p => '<img src="' + p + '">').join('') + '</div>'
+    : '';
+  document.getElementById('detail-content').innerHTML =
+    '<div class="c-hero" style="padding-top:24px">' +
+      '<div class="c-icon">' + (r.hasIssue ? '⚠️' : '✅') + '</div>' +
+      '<div class="c-title">' + escapeHtml(r.camName) + ' — ' + r.unitStr + '</div>' +
+      '<div class="c-sub">' + r.date + '</div>' +
+    '</div>' +
+    '<div style="padding:0 20px 20px">' +
+      '<div class="sum-card">' +
+        '<div class="sum-row"><span class="sum-k">담당자</span><span class="sum-v">' + escapeHtml(r.inspector || '미입력') + '</span></div>' +
+        (r.client ? '<div class="sum-row"><span class="sum-k">고객명</span><span class="sum-v">' + escapeHtml(r.client) + '</span></div>' : '') +
+        '<div class="sum-row"><span class="sum-k">점검 항목</span><span class="sum-v">' + r.done + ' / ' + r.total + ' 완료</span></div>' +
+        '<div class="sum-row"><span class="sum-k">상태</span><span class="' + (r.hasIssue ? 'st-bad' : 'st-ok') + '">' + r.status + '</span></div>' +
+      '</div>' +
+      (r.hasIssue ? '<div class="sec-label" style="margin-bottom:7px">미체크 항목 (' + r.issues.length + '개)</div>' +
+        '<div class="sum-card">' + r.issues.map(u => '<div class="issue-item">• ' + escapeHtml(u) + '</div>').join('') + '</div>' : '') +
+      (r.note ? '<div class="sec-label" style="margin-bottom:7px;margin-top:4px">특이사항 메모</div>' +
+        '<div class="sum-card"><div style="font-size:13px;line-height:1.6;color:var(--tx)">' + escapeHtml(r.note) + '</div></div>' : '') +
+      photoHtml +
+    '</div>';
+  navTo('s-detail', 's-history');
+}
+
+function copyDetail() {
+  if (navigator.clipboard && window._detailTxt) {
+    navigator.clipboard.writeText(window._detailTxt).then(() => {
+      const btn = document.getElementById('detail-copy');
+      btn.textContent = '✅ 복사됨!';
+      setTimeout(() => { btn.textContent = '📋 결과 복사'; }, 2000);
+    });
+  }
+}
+
+async function deleteDetail() {
+  if (!_detailId) return;
+  if (!confirm('이 점검 기록을 삭제할까요?')) return;
+  await deleteRecord(_detailId);
+  _detailId = null;
+  await renderHistory();
+  navBack('s-history', 's-detail');
+  toast('🗑️ 삭제됨', 'ok');
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── CSV 내보내기 ──────────────────────────────────────
+function csvCell(v) {
+  return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+}
+
+async function exportCSV() {
+  let records = [];
+  try { records = await getAllRecords(); } catch (e) {}
+  if (!records.length) { toast('내보낼 점검 이력이 없습니다'); return; }
+
+  const headers = ['일시','기종','호기','담당자','고객명','상태','점검','미체크 항목','특이사항','사진수'];
+  const rows = records.map(r => [
+    r.date, r.camName, r.unitStr, r.inspector || '', r.client || '',
+    r.status, r.done + '/' + r.total, (r.issues || []).join(' / '),
+    r.note || '', (r.photos ? r.photos.length : 0)
+  ].map(csvCell).join(','));
+
+  const csv = '﻿' + headers.map(csvCell).join(',') + '\n' + rows.join('\n'); // BOM(엑셀 한글)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const stamp = d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2);
+  a.href = url;
+  a.download = '수상한렌탈_점검이력_' + stamp + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('⬇️ CSV ' + records.length + '건 내보냄', 'ok');
+}
 
 // ── TOAST ─────────────────────────────────────────────
 let toastT;
@@ -809,6 +1097,26 @@ function buildDone() {
     (note ? '\n\n[특이사항]\n' + note : '') +
     (photos.length ? '\n\n[첨부 사진] ' + photos.length + '장' : '');
 
+  // ── 기기에 점검 이력 로컬 저장 (웹훅과 별개) ──
+  const record = {
+    id: (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
+    ts: now.getTime(),
+    date: ds,
+    camName: CAMS[st.cam].n,
+    unitStr: unitStr,
+    inspector: st.inspector,
+    client: st.client,
+    note: note,
+    done: done,
+    total: st.total,
+    status: status,
+    hasIssue: hasIssue,
+    issues: issues,
+    photos: photos.slice(),
+    resultTxt: window._resultTxt
+  };
+  saveRecord(record).catch(e => toast('⚠️ 로컬 저장 실패: ' + e.message));
+
   const wh = localStorage.getItem('sr_webhook');
   if (wh) {
     const payload = JSON.stringify({
@@ -865,7 +1173,15 @@ function openNotion() { window.open('https://www.notion.so/54963590e28745869d436
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('wh-url').value = localStorage.getItem('sr_webhook') || '';
   updateWhStatus();
+  openDB().catch(() => {}); // 미리 DB 열어두기
 });
+
+// 서비스워커 등록 (오프라인 + 설치형 PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function() {});
+  });
+}
 </script>
 </body>
 </html>
